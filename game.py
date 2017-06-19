@@ -24,11 +24,12 @@ class game:
 
 	def legal_moves(self,board,pid):
 		player_loc = board['player_loc'][pid]
-		for move in (RIGHT,LEFT,UP,DOWN)
+		return [move for move in (RIGHT,LEFT,UP,DOWN) if
+		 board['cells'][player_loc + move] == 0]
 
 
-	def is_terminal(self,board,move):
-
+	def is_terminal(self,board,pid):
+		return len(self.legal_moves(board,pid)) == 0
 
 	def deepish_copy(self,board):
 		'''
