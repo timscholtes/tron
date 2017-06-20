@@ -5,11 +5,11 @@ import copy
 class Reinforce:
 
 	def __init__(self,policy,game):
-		self.batch_size = 12
+		self.batch_size = 128
 		self.policies = [policy]
 		self.game = game
-		self.num_generations = 100
-		self.opponent_update_freq = 100
+		self.num_generations = 101
+		self.opponent_update_freq = 10
 
 
 	def batch_tournament(self):
@@ -18,40 +18,42 @@ class Reinforce:
 		result_store=[]
 		move_store = []
 		board_store = []
-		while len(result_store) < self.batch_size:
+		nmoves_per_game = []
+		while len(move_store) < self.batch_size:
 			result,moves,boards = self.game.play_game(True,False,self.policies[-1],opponent)
 			if result != -1:
+				nmoves_per_game.append(len(moves))
 				result_store.append(result)
-				move_store.append(moves)
-				board_store.append(boards)
-		return result_store[:self.batch_size],move_store[:self.batch_size],board_store[:self.batch_size]
+				move_store.extend(moves)
+				board_store.extend(boards)
+		return result_store[:self.batch_size],move_store[:self.batch_size],board_store[:self.batch_size],nmoves_per_game
 
-	def update_bot(self,train_boards,train_labels):
-		self.policies[-1].update_pars(train_boards,train_labels)
+	def update_bot(self,train_boards,train_labels,train_target):
+		self.policies[-1].update_pars(train_boards,train_labels,train_target)
 		pass
 
-	def prep_results(self,results,moves,boards):
-		ngames = len(results)
-		pass
-		#for n in ngames:
-
-
+	def prep_train_data(self,results,moves,boards,nmoves_per_game):
+		
+		results = (np.repeat(results,nmoves_per_game)*(-2)+1)[:self.batch_size]
+		results = np.reshape(results,(self.batch_size,1))
+		boards = np.reshape(boards,(self.batch_size,self.game.size,self.game.size,1))
+		return boards, moves,results
 
 
 	def train_generation(self):
 		for n in xrange(self.num_generations):
-			results,moves,boards = self.batch_tournament()
+			results,moves,boards,nmoves_per_game = self.batch_tournament()
 
 			# prep the data
-			train_boards,train_labels = self.prep_data(results,moves,boards)
-			self.update_bot(train_boards,train_labels)
+			batch_boards,batch_labels,batch_targets = self.prep_train_data(results,moves,boards,nmoves_per_game)
+			self.update_bot(batch_boards,batch_labels,batch_targets)
 
-			if n % 100 == 0:
+			if n % 10 == 0:
 				print n
 
 			if n % self.opponent_update_freq == 0 and n != 0:
 				self.policies[-1].save_session(n)
-				self.policies.append(copy.deepcopy(self.policies[-1]))
+				self.policies.append(policyNetwork.policyNetwork(self.game.size,n))
 			if len(self.policies) > 10:
 				del self.policies[random.randint(0,len(self.policies)-3)]
 
@@ -75,9 +77,7 @@ if __name__ == '__main__':
 
 	r = Reinforce(p,g)
 
-	a,b,c = r.batch_tournament()
-
-	print a,b
+	r.train_generation()
 
 
 

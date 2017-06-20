@@ -14,16 +14,16 @@ class policyNetwork:
 		self.num_hidden = 64
 		self.num_labels = 4
 		self.board_size = board_size
-		self.batch_size = 128*10
+		self.batch_size = 128
 		self.learn_rate = 0.01
 		self.graph = tf.Graph()
 
 		with self.graph.as_default():
 
-			train_boards = tf.placeholder(
+			self.train_boards = tf.placeholder(
 				tf.float32,shape=(self.batch_size,self.board_size,self.board_size,1))
-			train_labels = tf.placeholder(tf.float32,shape=(self.batch_size,self.num_labels))
-			train_target = tf.placeholder(tf.float32,shape=(self.batch_size,1))
+			self.train_labels = tf.placeholder(tf.int32)
+			self.train_targets = tf.placeholder(tf.float32)
 			self.execute_board = tf.placeholder(
 				tf.float32,shape=(1,self.board_size,self.board_size,1))
 
@@ -45,13 +45,14 @@ class policyNetwork:
 				[self.num_hidden, self.num_labels], stddev=0.1))
 			self.b4 = tf.Variable(tf.constant(1.0,shape=[self.num_labels]))
 
-			logits = self.model(train_boards)
+			logits = self.model(self.train_boards)
 			# loss = tf.reduce_mean(
 			# 	tf.nn.softmax_cross_entropy_with_logits(labels=train_labels,logits=logits))
 
-			action_onehot = tf.one_hot(train_labels,4)
-			action_prob = tf.reduce_sum(logits*action_onehot,1)
-			loss = -tf.reduce_mean(train_target * tf.log(action_prob + 1e-13))
+			action_onehot = tf.one_hot(self.train_labels,4)
+			action_prob = logits * action_onehot
+			#action_prob = tf.gather(logits,self.train_labels)
+			loss = tf.reduce_mean( - self.train_targets * tf.log(action_prob + 1e-13))
 
 			self.optimizer = tf.train.GradientDescentOptimizer(self.learn_rate).minimize(loss)
 
@@ -82,9 +83,10 @@ class policyNetwork:
 
 	
 
-	def update_pars(self,train_boards,train_labels):
-		feed_dict = {train_boards: train_boards,
-		train_labels: train_labels}
+	def update_pars(self,batch_boards,batch_labels,batch_targets):
+		feed_dict = {self.train_boards: batch_boards,
+		self.train_labels: batch_labels,
+		self.train_targets: batch_targets}
 		self.sess.run(self.optimizer,feed_dict)
 		pass
 
@@ -124,7 +126,7 @@ if __name__ == '__main__':
 
 	g = game.game()
 
-	p = policyNetwork.policyNetwork(g.size,1)
+	p = policyNetwork(g.size,1)
 	print p.patch_size
 	board = {'cells': np.zeros((21,21)),
 		'player_loc': (np.array([9,7]),np.array([9,11]))
