@@ -1,12 +1,13 @@
 import tensorflow as tf
 import numpy as np
+import os
 LEFT  = np.array([-1,0])
 RIGHT = np.array([1,0])
 UP    = np.array([0,1])
 DOWN  = np.array([0,-1])
 class policyNetwork:
 
-	def __init__(self,board_size):
+	def __init__(self,board_size,restore_id=None):
 		self.patch_size=5
 		self.depth = 16
 		self.num_hidden = 64
@@ -48,11 +49,19 @@ class policyNetwork:
 			self.optimizer = tf.train.GradientDescentOptimizer(self.learn_rate).minimize(loss)
 
 			self.execute_moves = tf.nn.softmax(self.model(self.execute_board))
+			
 
 			self.sess = tf.Session(graph=self.graph)
-			print 'initializing'
-			init = tf.global_variables_initializer()
-			self.sess.run(init)
+			
+			self.saver = tf.train.Saver()
+			if restore_id is not None:
+				print 'restoring from: ',"/models/model"+str(restore_id)+".ckpt"
+				self.saver.restore(self.sess,"./models/model"+str(restore_id)+".ckpt")
+			else:
+				print 'initializing'
+				init = tf.global_variables_initializer()
+				self.sess.run(init)
+			
 
 	def model(self,cells):
 		conv = tf.nn.conv2d(cells, self.w1, [1, 2, 2, 1], padding='SAME')
@@ -66,13 +75,21 @@ class policyNetwork:
 
 	
 
-	def update_pars(self,train_boards,):
+	def update_pars(self,train_boards,train_labels):
 		feed_dict = {train_boards: train_boards,
 		train_labels: train_labels}
-		self.sess.run(self.optimizer)
+		self.sess.run(self.optimizer,feed_dict)
 		pass
 
+	def save_session(self,id):
+		save_path = self.saver.save(self.sess,"./models/model"+str(id)+".ckpt")
+		print("Model saved in file: %s" % save_path)
+		pass
 
+	def manual_restore(self,restore_id):
+		print 'restoring from: ',"./models/model"+str(restore_id)+".ckpt"
+		self.saver.restore(self.sess,"./models/model"+str(restore_id)+".ckpt")
+		pass
 
 
 

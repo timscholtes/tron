@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
 	g = game.game()
 
-	p = policyNetwork.policyNetwork(g.size)
+	p = policyNetwork.policyNetwork(g.size,1)
 	print p.patch_size
 	board = {'cells': np.zeros((21,21)),
 		'player_loc': (np.array([9,7]),np.array([9,11]))
@@ -40,5 +40,10 @@ if __name__ == '__main__':
 	board['cells'][(9,9),(10,11)] = (1,3)
 
 	pp = policyBot(p)
-	print pp.get_move(g,board,0)
+	move =  pp.get_move(g,board,0)
+	print move
+
+	p.save_session(1)
+	p.manual_restore(1)
+
 	

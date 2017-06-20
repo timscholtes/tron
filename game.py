@@ -29,8 +29,10 @@ class game:
 
 
 	def legal_moves(self,board,pid):
-		return [move for move in (RIGHT,LEFT,UP,DOWN) if self.is_legal(board,move,pid)]
+		return [move for move in (LEFT,RIGHT,UP,DOWN) if self.is_legal(board,move,pid)]
 
+	def legal_moves_index(self,board,pid):
+		return [i for move,i in zip([LEFT,RIGHT,UP,DOWN],range(4)) if self.is_legal(board,move,pid)]
 
 	def is_terminal(self,board,pid):
 		return len(self.legal_moves(board,pid)) == 0
@@ -101,15 +103,21 @@ class game:
 		}
 		board['cells'][(9,9),(8,7)] = (1,2)
 		board['cells'][(9,9),(10,11)] = (1,3)
-
+		all_moves = list()
+		all_boards = list()
 		if verbose:
 			self.print_board(board)
 		while True:
 			moves = [player.get_move(self,board,pid) for player,pid in zip(players,(0,1))]
-			
+			if record:
+				all_boards.append(board['cells'])
+				all_moves.append(moves)
 			new_locs = (moves[0] + board['player_loc'][0],moves[1] + board['player_loc'][1])
 			if (new_locs[0] == new_locs[1]).all():
-				return -1
+				if record:
+					return -1,all_moves,all_boards
+				else:
+					return -1
 			else:
 				board = self.make_move(board,moves)
 
@@ -119,7 +127,10 @@ class game:
 			for pid in (0,1):
 				out = self.is_terminal(board,pid)
 				if out:
-					return 1-pid
+					if record:
+						return 1-pid, all_moves,all_boards
+					else:
+						return 1-pid
 
 
 
@@ -139,8 +150,14 @@ class randomBot:
 
 if __name__ == '__main__':
 	g = game()
-	bot1 =randomBot()
-	bot2 = randomBot()
-	outcome = g.play_game(False,True,bot1,bot2)
-	print outcome
+	# bot1 =randomBot()
+	# bot2 = randomBot()
+	# outcome = g.play_game(False,True,bot1,bot2)
+	# print outcome
+	board = {'cells': np.zeros((21,21)),
+		'player_loc': (np.array([9,7]),np.array([9,11]))
+		}
+	board['cells'][(9,9),(8,7)] = (1,2)
+	board['cells'][(9,9),(10,11)] = (1,3)
 
+	print g.legal_moves_index(board,0)
