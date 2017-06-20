@@ -14,7 +14,7 @@ DOWN  = np.array([0,-1])
 class game:
 	
 	def __init__(self):
-		self.size = 51
+		self.size = 21
 
 	def is_legal(self,board,move,pid):
 		player_loc = board['player_loc'][pid]
@@ -25,7 +25,7 @@ class game:
 					np.array([self.size-1,self.size-1])
 					))
 
-		return board['cells'][new_loc] == 2
+		return board['cells'][new_loc] == 0
 
 
 	def legal_moves(self,board,pid):
@@ -56,10 +56,15 @@ class game:
 	def make_move(self,board,moves):
 
 		board_copy = self.deepish_copy(board)
-		new_locs = (moves[0] + board['player_loc'][0],moves[1] + board['player_loc'][1])
+		cur_locs = board['player_loc']
+		new_locs = (moves[0] + cur_locs[0],moves[1] + cur_locs[1])
 
-		board_copy['cells'][tuple(new_locs[0])] = 0
-		board_copy['cells'][tuple(new_locs[1])] = 1
+		board_copy['cells'][tuple(new_locs[0])] = 2
+		board_copy['cells'][tuple(new_locs[1])] = 3
+		board_copy['cells'][tuple(cur_locs[0])] = 1
+		board_copy['cells'][tuple(cur_locs[1])] = 1
+
+		board_copy['cells']
 
 		board_copy['player_loc'] = new_locs
 
@@ -68,25 +73,43 @@ class game:
 	def successors(self,board,pid):
 		return [(move,self.make_move(board,move,pid)) for move in self.legal_moves(board,pid)]
 
+
 	def print_board(self,board):
-		opt = np.get_printoptions()
-		np.set_printoptions(threshold='nan')
-		pprint(board)
-		np.set_printoptions(**opt)
+		print '-'*(self.size*3+2)
+		for y in range(self.size):
+			line=['|']
+			for x in range(self.size):
+				v = board['cells'][y,x]
+				if v == 0:
+					a = ' '
+				elif v == 1:
+					a = '*'
+				elif v == 2:
+					a = '1'
+				elif v == 3:
+					a = '2'
+				line.append(' {} '.format(a))
+			line.append('|')
+			print ''.join(line)
+		print '-'*(self.size*3+2)
+		pass
+
 
 	def play_game(self,record=False,verbose=False,*players,**kwargs):
-		board = {'cells': np.full((self.size,self.size),2),
-		'player_loc': (np.array([23,25]),np.array([27,25]))
+		board = {'cells': np.zeros((self.size,self.size)),
+		'player_loc': (np.array([9,7]),np.array([9,11]))
 		}
-		board['cells'][(24,25),(23,25)] = 0
-		board['cells'][(26,25),(27,25)] = 1
+		board['cells'][(9,9),(8,7)] = (1,2)
+		board['cells'][(9,9),(10,11)] = (1,3)
 
+		if verbose:
+			self.print_board(board)
 		while True:
 			moves = [player.get_move(self,board,pid) for player,pid in zip(players,(0,1))]
 			
 			new_locs = (moves[0] + board['player_loc'][0],moves[1] + board['player_loc'][1])
 			if (new_locs[0] == new_locs[1]).all():
-				return 0
+				return -1
 			else:
 				board = self.make_move(board,moves)
 
