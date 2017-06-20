@@ -111,7 +111,8 @@ class game:
 			moves = [player.get_move(self,board,pid) for player,pid in zip(players,(0,1))]
 			if record:
 				all_boards.append(board['cells'])
-				all_moves.append(moves)
+				move_ind = [i for i,m in enumerate([LEFT,RIGHT,UP,DOWN]) if (m == moves[0]).all()]
+				all_moves.extend(move_ind)
 			new_locs = (moves[0] + board['player_loc'][0],moves[1] + board['player_loc'][1])
 			if (new_locs[0] == new_locs[1]).all():
 				if record:
@@ -150,14 +151,6 @@ class randomBot:
 
 if __name__ == '__main__':
 	g = game()
-	# bot1 =randomBot()
-	# bot2 = randomBot()
-	# outcome = g.play_game(False,True,bot1,bot2)
-	# print outcome
-	board = {'cells': np.zeros((21,21)),
-		'player_loc': (np.array([9,7]),np.array([9,11]))
-		}
-	board['cells'][(9,9),(8,7)] = (1,2)
-	board['cells'][(9,9),(10,11)] = (1,3)
-
-	print g.legal_moves_index(board,0)
+	bot1 =randomBot()
+	bot2 = randomBot()
+	outcome = g.play_game(False,True,bot1,bot2)

@@ -5,6 +5,7 @@ LEFT  = np.array([-1,0])
 RIGHT = np.array([1,0])
 UP    = np.array([0,1])
 DOWN  = np.array([0,-1])
+
 class policyNetwork:
 
 	def __init__(self,board_size,restore_id=None):
@@ -22,6 +23,7 @@ class policyNetwork:
 			train_boards = tf.placeholder(
 				tf.float32,shape=(self.batch_size,self.board_size,self.board_size,1))
 			train_labels = tf.placeholder(tf.float32,shape=(self.batch_size,self.num_labels))
+			train_target = tf.placeholder(tf.float32,shape=(self.batch_size,1))
 			self.execute_board = tf.placeholder(
 				tf.float32,shape=(1,self.board_size,self.board_size,1))
 
@@ -44,8 +46,13 @@ class policyNetwork:
 			self.b4 = tf.Variable(tf.constant(1.0,shape=[self.num_labels]))
 
 			logits = self.model(train_boards)
-			loss = tf.reduce_mean(
-				tf.nn.softmax_cross_entropy_with_logits(labels=train_labels,logits=logits))
+			# loss = tf.reduce_mean(
+			# 	tf.nn.softmax_cross_entropy_with_logits(labels=train_labels,logits=logits))
+
+			action_onehot = tf.one_hot(train_labels,4)
+			action_prob = tf.reduce_sum(logits*action_onehot,1)
+			loss = -tf.reduce_mean(train_target * tf.log(action_prob + 1e-13))
+
 			self.optimizer = tf.train.GradientDescentOptimizer(self.learn_rate).minimize(loss)
 
 			self.execute_moves = tf.nn.softmax(self.model(self.execute_board))
@@ -91,5 +98,45 @@ class policyNetwork:
 		self.saver.restore(self.sess,"./models/model"+str(restore_id)+".ckpt")
 		pass
 
+	def get_move(self,game,board,pid):
+		
+		feed_dict = {self.execute_board: np.reshape(board['cells'],[1,21,21,1])}
+		move_probs = self.sess.run(self.execute_moves,feed_dict).tolist()[0]
+	
+		lmoves = game.legal_moves_index(board,pid)
+		new_probs = [move_probs[i] for i in lmoves]
+		new_probs = [i/sum(new_probs) for i in new_probs]
+		choice = np.random.choice(lmoves,p=new_probs)
+		move = (LEFT,RIGHT,UP,DOWN)[choice]
+		return(move)
 
 
+
+
+if __name__ == '__main__':
+
+	import game
+	import numpy as np
+	LEFT  = np.array([-1,0])
+	RIGHT = np.array([1,0])
+	UP    = np.array([0,1])
+	DOWN  = np.array([0,-1])
+
+	g = game.game()
+
+	p = policyNetwork.policyNetwork(g.size,1)
+	print p.patch_size
+	board = {'cells': np.zeros((21,21)),
+		'player_loc': (np.array([9,7]),np.array([9,11]))
+		}
+	board['cells'][(9,9),(8,7)] = (1,2)
+	board['cells'][(9,9),(10,11)] = (1,3)
+
+	
+	move =  p.get_move(g,board,0)
+	print move
+
+	p.save_session(1)
+	p.manual_restore(1)
+
+	
