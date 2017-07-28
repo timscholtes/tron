@@ -5,10 +5,10 @@ import random
 import itertools
 from pprint import pprint
 
-LEFT  = np.array([-1,0])
-RIGHT = np.array([1,0])
-UP    = np.array([0,1])
-DOWN  = np.array([0,-1])
+LEFT  = np.array([0,-1])
+RIGHT = np.array([0,1])
+UP    = np.array([1,0])
+DOWN  = np.array([-1,0])
 
 
 class game:
@@ -25,7 +25,7 @@ class game:
 					np.array([self.size-1,self.size-1])
 					))
 
-		return board['cells'][new_loc] == 0
+		return board['cells'][new_loc] == -0.5
 
 
 	def legal_moves(self,board,pid):
@@ -61,10 +61,10 @@ class game:
 		cur_locs = board['player_loc']
 		new_locs = (moves[0] + cur_locs[0],moves[1] + cur_locs[1])
 
-		board_copy['cells'][tuple(new_locs[0])] = 2
-		board_copy['cells'][tuple(new_locs[1])] = 3
-		board_copy['cells'][tuple(cur_locs[0])] = 1
-		board_copy['cells'][tuple(cur_locs[1])] = 1
+		board_copy['cells'][tuple(new_locs[0])] = -1
+		board_copy['cells'][tuple(new_locs[1])] = 1
+		board_copy['cells'][tuple(cur_locs[0])] = 0.5
+		board_copy['cells'][tuple(cur_locs[1])] = 0.5
 
 		board_copy['cells']
 
@@ -82,13 +82,13 @@ class game:
 			line=['|']
 			for x in range(self.size):
 				v = board['cells'][y,x]
-				if v == 0:
+				if v == -0.5:
 					a = ' '
-				elif v == 1:
+				elif v == 0.5:
 					a = '*'
-				elif v == 2:
+				elif v == -1:
 					a = '1'
-				elif v == 3:
+				elif v == 1:
 					a = '2'
 				line.append(' {} '.format(a))
 			line.append('|')
@@ -98,11 +98,19 @@ class game:
 
 
 	def play_game(self,record=False,verbose=False,*players,**kwargs):
-		board = {'cells': np.zeros((self.size,self.size)),
-		'player_loc': (np.array([9,7]),np.array([9,11]))
+		p1 = np.random.choice([-1,1])
+
+		board = {'cells': np.full((self.size,self.size),-0.5),
+		# 'player_loc': (np.array([9,7]),np.array([9,11]))
+		'player_loc': (np.array([9,9+2*p1]),np.array([9,9-2*p1]))
 		}
-		board['cells'][(9,9),(8,7)] = (1,2)
-		board['cells'][(9,9),(10,11)] = (1,3)
+		
+
+		# board['cells'][(9,9),(8,7)] = (0.5,-1)
+		# board['cells'][(9,9),(10,11)] = (0.5,1)
+		board['cells'][(9,9),(8,7)] = (0.5,p1)
+		board['cells'][(9,9),(10,11)] = (0.5,-1*p1)
+
 		all_moves = list()
 		all_boards = list()
 		if verbose:
@@ -154,3 +162,4 @@ if __name__ == '__main__':
 	bot1 =randomBot()
 	bot2 = randomBot()
 	outcome = g.play_game(False,True,bot1,bot2)
+	print outcome
