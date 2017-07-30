@@ -59,6 +59,7 @@ class Reinforce:
 		#results = np.reshape(results,(self.batch_size,1))
 
 		# reverse boards in up-down and left right directions
+		boards = [b['cells'] for b in boards]
 		boards_lr = [np.fliplr(b) for b in boards]
 		boards_ud = [np.flipud(b) for b in boards]
 		boards_both = [np.flipud(np.fliplr(b)) for b in boards]

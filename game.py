@@ -4,6 +4,7 @@ import numpy as np
 import random
 import itertools
 from pprint import pprint
+import copy
 
 LEFT  = np.array([0,-1])
 RIGHT = np.array([0,1])
@@ -48,10 +49,13 @@ class game:
 			# try:
 			#     out[k] = v.copy()   # dicts, sets
 			# except AttributeError:
-			try:
-				out[k] = v[:]   # lists, tuples, strings, unicode
-			except TypeError:
-				out[k] = v      # ints	 
+			if type(v) == np.ndarray:
+				out[k] = 1*v
+			else:
+				try:
+					out[k] = v[:]   # lists, tuples, strings, unicode
+				except TypeError:
+					out[k] = v      # ints	 
 		return out
 
 
@@ -114,11 +118,13 @@ class game:
 		all_moves = list()
 		all_boards = list()
 		if verbose:
+			print board['player_loc']
 			self.print_board(board)
 		while True:
 			moves = [player.get_move(self,board,pid) for player,pid in zip(players,(0,1))]
 			if record:
-				all_boards.append(board['cells'])
+				board_copy = self.deepish_copy(board)
+				all_boards.append(board_copy)
 				move_ind = [i for i,m in enumerate([LEFT,RIGHT,UP,DOWN]) if (m == moves[0]).all()]
 				all_moves.extend(move_ind)
 			new_locs = (moves[0] + board['player_loc'][0],moves[1] + board['player_loc'][1])
@@ -131,6 +137,7 @@ class game:
 				board = self.make_move(board,moves)
 
 			if verbose:
+				print board['player_loc']
 				self.print_board(board)
 
 			for pid in (0,1):
@@ -141,7 +148,46 @@ class game:
 					else:
 						return 1-pid
 
+	def play_game_record_boards(self,*players,**kwargs):
+		p1 = np.random.choice([-1,1])
 
+		board = {'cells': np.full((self.size,self.size),-0.5),
+		# 'player_loc': (np.array([9,7]),np.array([9,11]))
+		'player_loc': (np.array([9,9+2*p1]),np.array([9,9-2*p1]))
+		}
+		
+		board['cells'][(9,9),(8,7)] = (0.5,p1)
+		board['cells'][(9,9),(10,11)] = (0.5,-1*p1)
+
+		all_boards = list()
+		while True:
+			moves = [player.get_move(self,board,pid) for player,pid in zip(players,(0,1))]
+			board_copy = self.deepish_copy(board)
+			all_boards.append(board_copy)
+			new_locs = (moves[0] + board['player_loc'][0],moves[1] + board['player_loc'][1])
+			if (new_locs[0] == new_locs[1]).all():
+				return all_boards
+			else:
+				board = self.make_move(board,moves)
+
+			for pid in (0,1):
+				out = self.is_terminal(board,pid)
+				if out:
+					return all_boards
+
+	def play_game_from_board(self,board,*players,**kwargs):
+		while True:
+			moves = [player.get_move(self,board,pid) for player,pid in zip(players,(0,1))]
+			new_locs = (moves[0] + board['player_loc'][0],moves[1] + board['player_loc'][1])
+			if (new_locs[0] == new_locs[1]).all():
+				return -1
+			else:
+				board = self.make_move(board,moves)
+
+			for pid in (0,1):
+				out = self.is_terminal(board,pid)
+				if out:
+					return 1-pid
 
 # quick random bot:
 

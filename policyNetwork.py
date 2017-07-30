@@ -6,6 +6,7 @@ LEFT  = np.array([0,-1])
 RIGHT = np.array([0,1])
 UP    = np.array([1,0])
 DOWN  = np.array([-1,0])
+DEVICE = '/cpu:0'
 
 class policyNetwork:
 
@@ -90,33 +91,35 @@ class policyNetwork:
 			
 
 	def model(self,cells):
-		conv = tf.nn.conv2d(cells, self.w1, [1, 4, 4, 1], padding='SAME')
-		hidden = tf.nn.relu(conv + self.b1)
-		conv = tf.nn.conv2d(hidden, self.w2, [1, 2, 2, 1], padding='SAME')
-		hidden = tf.nn.relu(conv + self.b2)
-		conv = tf.nn.conv2d(hidden, self.w3, [1, 1, 1, 1], padding='SAME')
-		hidden = tf.nn.relu(conv + self.b3)
+		with tf.device(DEVICE):
+			conv = tf.nn.conv2d(cells, self.w1, [1, 4, 4, 1], padding='SAME')
+			hidden = tf.nn.relu(conv + self.b1)
+			conv = tf.nn.conv2d(hidden, self.w2, [1, 2, 2, 1], padding='SAME')
+			hidden = tf.nn.relu(conv + self.b2)
+			conv = tf.nn.conv2d(hidden, self.w3, [1, 1, 1, 1], padding='SAME')
+			hidden = tf.nn.relu(conv + self.b3)
 
-		shape = hidden.get_shape().as_list()
-		reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
-		hidden1 = tf.nn.relu(tf.matmul(reshape, self.w4) + self.b4)
-		hidden2 = tf.nn.relu(tf.matmul(hidden1, self.w5) + self.b5)
+			shape = hidden.get_shape().as_list()
+			reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
+			hidden1 = tf.nn.relu(tf.matmul(reshape, self.w4) + self.b4)
+			hidden2 = tf.nn.relu(tf.matmul(hidden1, self.w5) + self.b5)
 		return tf.matmul(hidden2, self.w6) + self.b6
 
 	def model_train(self,cells):
-		conv = tf.nn.conv2d(cells, self.w1, [1, 4, 4, 1], padding='SAME')
-		hidden = tf.nn.relu(conv + self.b1)
-		conv = tf.nn.conv2d(hidden, self.w2, [1, 2, 2, 1], padding='SAME')
-		hidden = tf.nn.relu(conv + self.b2)
-		conv = tf.nn.conv2d(hidden, self.w3, [1, 1, 1, 1], padding='SAME')
-		hidden = tf.nn.relu(conv + self.b3)
+		with tf.device(DEVICE):
+			conv = tf.nn.conv2d(cells, self.w1, [1, 4, 4, 1], padding='SAME')
+			hidden = tf.nn.relu(conv + self.b1)
+			conv = tf.nn.conv2d(hidden, self.w2, [1, 2, 2, 1], padding='SAME')
+			hidden = tf.nn.relu(conv + self.b2)
+			conv = tf.nn.conv2d(hidden, self.w3, [1, 1, 1, 1], padding='SAME')
+			hidden = tf.nn.relu(conv + self.b3)
 
-		shape = hidden.get_shape().as_list()
-		reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
-		hidden1 = tf.nn.relu(tf.matmul(reshape, self.w4) + self.b4)
-		hidden_dropped1 = tf.nn.dropout(hidden1,0.5)
-		hidden2 = tf.nn.relu(tf.matmul(hidden_dropped1, self.w5) + self.b5)
-		hidden_dropped2 = tf.nn.dropout(hidden2,0.5)
+			shape = hidden.get_shape().as_list()
+			reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
+			hidden1 = tf.nn.relu(tf.matmul(reshape, self.w4) + self.b4)
+			hidden_dropped1 = tf.nn.dropout(hidden1,0.5)
+			hidden2 = tf.nn.relu(tf.matmul(hidden_dropped1, self.w5) + self.b5)
+			hidden_dropped2 = tf.nn.dropout(hidden2,0.5)
 
 		return tf.matmul(hidden_dropped2, self.w6) + self.b6
 
@@ -189,7 +192,7 @@ if __name__ == '__main__':
 	g = game.game()
 
 	p1 = policyNetwork(g.size,100)
-	p2 = policyNetwork(g.size,12000)
+	p2 = policyNetwork(g.size,39000)
 	# print p.patch_size
 	# board = {'cells': np.zeros((21,21)),
 	# 	'player_loc': (np.array([9,7]),np.array([9,11]))
@@ -203,8 +206,17 @@ if __name__ == '__main__':
 
 	# p.save_session(1)
 	#	p.manual_restore(100)
-	res = g.play_game(False,True,p1,p2)
-	print res
+	# score = []
+	# for i in xrange(1000):
+	# 	res = -1
+	# 	while res == -1:
+	# 		res = g.play_game(False,False,p1,p2)
+	# 	score.append(res)
+
+
+	# print np.mean(score)
+	g.play_game(False,True,p1,p2)
+
 
 
 	
