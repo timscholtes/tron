@@ -49,7 +49,7 @@ p1 = randomBot()
 p2 = randomBot()
 
 N = 1000
-K = 500
+K = 1000
 
 def start_board_generator():
 	boards = []
@@ -109,9 +109,9 @@ def inner_write_func(nd):
 	writer = tf.python_io.TFRecordWriter('data/board_outcome_'+str(nd)+'.tfrecords')
 
 	for rd in range(10):
-		print rd
+		print 'generating data: ',rd, nd
 		boards,results = generate_board_results()
-
+		print 'writing data: ',rd, nd
 		for b, r in zip(boards,results):
 			r = np.float64(r)
 			b2 = b.tolist()
@@ -138,15 +138,10 @@ def write_func_mp(nc,num_datasets,runs_per_dataset):
 
 
 
-
-
-
-
-
 if __name__ == '__main__':
 
 
-	write_func_mp(4,16,50)
+	write_func_mp(32,32,50)
 
 
 # 	g = game()
