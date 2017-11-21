@@ -49,13 +49,17 @@ p1 = randomBot()
 p2 = randomBot()
 
 N = 1000
-K = 500
+K = 50
 
 def start_board_generator():
 	boards = []
 	for n in range(N):
-		game_boards = g.play_game_record_boards(p1,p2)
-		boards.append(g.deepish_copy(random.choice(game_boards)))
+		# if n % 10 == 0:
+		# 	print n
+		#game_boards = g.play_game_record_boards(p1,p2)
+		game_board = g.play_game_record_boards(p1,p2)
+		
+		boards.append(g.deepish_copy(game_board))
 	return boards
 
 def rollout_player(start_boards):
@@ -106,9 +110,9 @@ def outer_write_func(num_datasets,runs_per_dataset):
 
 def inner_write_func(nd):
 	print 'starting ',nd
-	writer = tf.python_io.TFRecordWriter('data/board_outcome_'+str(nd)+'.tfrecords')
+	writer = tf.python_io.TFRecordWriter('data3/board_outcome_'+str(nd)+'.tfrecords')
 
-	for rd in range(10):
+	for rd in range(100):
 		print rd
 		boards,results = generate_board_results()
 
